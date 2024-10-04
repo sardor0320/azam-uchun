@@ -22,7 +22,7 @@ function register() {
   if (username.value !== "") {
     console.log("ishladi");
 
-    fetch("http://161.35.214.247:8090/auth/login", init)
+    fetch("http://64.226.108.80:8090/auth/login", init)
       .then((response) => {
         console.log(response);
         return response.json();
@@ -37,7 +37,7 @@ function register() {
           } else if (res.role == "ROLE_SELLER") {
             window.location.href = "/html/index.html";
           } else if (res.role == "ROLE_BUYER") {
-            window.location.href = "/html/index.html";
+            window.location.href = "/html/buyer.html";
             
           }
           localStorage.setItem("token", res.token)

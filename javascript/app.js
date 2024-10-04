@@ -1,140 +1,201 @@
-"use strict";
+const products = document.querySelector(".products");
+const cardsBody = document.querySelector(".cards_body");
+const cardModal = document.querySelector(".cardModal");
+const addNew = document.querySelector(".addNew");
+const deleteModal = document.querySelector(".deleteModal");
+const addModal = document.querySelector(".addModal");
+const closeAddModal = document.querySelector(".closeAddModal");
+const closeCardModal = document.querySelectorAll(".closeCardModal");
+const closeDeleteModal = document.querySelectorAll(".closeDeleteModal");
+const ism = document.querySelector(".name");
+const category = document.querySelector(".category");
+const price = document.querySelector(".price");
+const description = document.querySelector(".description");
+const save = document.querySelector(".save");
 
-let tables = document.querySelector("#userTable");
-let addButton = document.querySelector(".addNew");
-let nameInput = document.getElementById("newUserName");
-let modal = document.querySelector(".modall");
-let editModal = document.querySelector(".edit-modal");
-let closeEdit = document.querySelector("#close-edit");
-let close = document.querySelector("#close");
-let open = document.querySelector("#openn");
-let modalUserName = document.querySelector(".modalUserName");
-let modalUserEmail = document.querySelector(".modalUserEmail");
-let modalUserPrice = document.querySelector(".modalUserPrice");
-let add = document.querySelector("#crud-modal");
-// let closeAdd = document.querySelector(".close-add")
-
-function openAdd(){
-  add.classList.remove("hidden")
-}
-
-function closeAdd(){
-  add.classList.add("hidden")
-}
-
-function getFetch() {
-  let row = users.map((item, index) => {
-    return `<tr class="w-full bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <td class="py-3 px-6 text-left w-36 h-36 object-cover"><img src="${item.image} "></td>
-                    <td class="py-3 px-6 text-left">${item.name}</td>
-                    <td class="py-3 px-6 text-left overflow-auto">${item.description}</td>
-                    <td class="py-3 px-6 text-left">${item.price}</td>
-                    <td class="py-3 px-6 text-center">
-                        <button class="infoBtn bg-blue-500 text-white px-4 py-2 rounded mr-2" data-index='${index}'>Info</button>
-                        <button class="editBtn bg-yellow-500 text-white px-4 py-2 rounded mr-2" data-index="${index}">Edit</button>
-                        <button onclick="deleteBtn(${index})" class="deleteBtn bg-red-500 text-white px-4 py-2 rounded" data-index="${index}" >Delete</button>
-                    </td>
-                 </tr>`;
+closeCardModal.forEach((item) => {
+  item.addEventListener("click", () => {
+    cardModal.classList.add("hidden");
   });
-  tables.innerHTML = row.join("");
-
-  document.querySelectorAll(".infoBtn").forEach((item) => {
-    item.addEventListener("click", OpenModal);
+});
+closeDeleteModal.forEach((item) => {
+  item.addEventListener("click", () => {
+    deleteModal.classList.add("hidden");
   });
-
-  document.querySelectorAll(".editBtn").forEach((item) => {
-    item.addEventListener("click", openEditModal);
-  });
-}
-
-getFetch();
-
-function deleteBtn(index) {
-  users.splice(index, 1);
-  getFetch();
-}
-
-addButton.addEventListener("click", () => {
-  addUsers();
 });
 
-function addUsers() {
-  let img = document.querySelector(".img-add")
-  let nameInput = document.getElementById("name-add");
-  let descriptionInput = document.getElementById("#newUserDescription");
-  let priceInput = document.getElementById("newUserPrice");
-  
-  let obg = {
-    image: img.value, 
-    name: nameInput.value,
-    description: descriptionInput.value,
-    price: priceInput.value,
-  };
-  if (nameInput.value && descriptionInput.value && priceInput.value ) {
-    users.push(obg);
-    img.value = "";
-    nameInput.value = "";
-    descriptionInput.value = "";
-    priceInput.value = "";
-    closeAdd();
-    getFetch();
- 
-  } else {
-      // alert("Iltimos, barcha maydonlarni to'ldiring.");
+let productId;
+
+const getProducts = async () => {
+  try {
+    const data = await fetch("http://64.226.108.80:8090/product/list", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    });
+
+    if (!data.ok) {
+      throw new Error("Failed to fetch products");
+    }
+
+    const res = await data.json();
+    let row = "";
+
+    res.body.forEach((item) => {
+      row += `
+        <div class="p-5 min-w-60 bg-gray-800 rounded-lg relative">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              ${item.name}
+            </h5>
+            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
+              ${item.description}
+            </p>
+            <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
+              Price: <span class="text-white">${item.price}</span>
+            </p>
+            <button onclick='addCard(${JSON.stringify(item)})' 
+              class="rounded-lg px-5 py-2 bg-blue-500 text-white">Add to cart
+            </button>
+            <button onclick='editProduct(${JSON.stringify(item)})' 
+              class="rounded-lg px-5 py-2 bg-yellow-500 text-white">Edit
+            </button>
+            <button onclick='deleteProduct(${item.id})' 
+              class="rounded-lg px-5 py-2 bg-red-500 text-white">Delete
+            </button>
+        </div>
+      `;
+    });
+
+    products.innerHTML = row;
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    alert("Failed to load products. Please try again later.");
   }
-  
+};
+
+function addCard(product) {
+  const productsInCart = JSON.parse(localStorage.getItem("products")) || [];
+
+  const existProduct = productsInCart.find((p) => p.id === product.id);
+
+  if (existProduct) {
+    const filter = productsInCart.filter(
+      (product) => product.id !== existProduct.id
+    );
+
+    const updateProduct = [
+      ...filter,
+      { ...existProduct, quantity: existProduct.quantity + 1 },
+    ];
+    localStorage.setItem("products", JSON.stringify(updateProduct));
+  } else {
+    productsInCart.push({ ...product, quantity: 1 });
+    localStorage.setItem("products", JSON.stringify(productsInCart));
+  }
 }
 
-function OpenModal(e) {
-  let index = e.target.getAttribute("data-index");
-  let data = users[index];
-  modal.classList.remove("hidden");
-  modalUserName.innerText = "Name: " + data.name;
-  modalUserEmail.innerText = "Description: " + data.description;
-  modalUserPrice.innerText = "Price: " + data.price;
+const openCard = () => {
+  cardModal.classList.remove("hidden");
+
+  const cards = JSON.parse(localStorage.getItem("products")) || [];
+  let row = "";
+
+  cards.forEach((item) => {
+    row += `
+      <div class="w-full bg-gray-500 flex justify-between text-white p-2 rounded-lg">
+        <h1 class="text-xl">${item.name}</h1>
+        <div class="max-w-2/4">
+          <p class="text-lg line-clamp-1">Price: ${item.price}</p>
+          <p class="text-lg line-clamp-1">Quantity: ${item.quantity}</p>
+          <p class="text-lg line-clamp-1">Description: ${item.description}</p>
+        </div>
+      </div>
+    `;
+
+    cardsBody.innerHTML = row;
+  });
+};
+
+function editProduct(product) {
+  console.log("Edit product:", product);
 }
 
-close.addEventListener("click", () => {
-  modal.classList.add("hidden");
+function deleteProduct(id) {
+  productId = id;
+  deleteModal.classList.remove("hidden");
+}
+
+async function deletePro() {
+  try {
+    await fetch(`http://64.226.108.80:8090/product/${productId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    });
+    getProducts();
+    deleteModal.classList.add("hidden");
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+getProducts();
+
+addNew.addEventListener("click", async () => {
+  addModal.classList.remove("hidden");
+
+  try {
+    const response = await fetch("http://64.226.108.80:8090/category/list", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    });
+
+    const data = await response.json();
+
+    let row = "";
+    data.body.forEach((item) => {
+      row += `<option value="${item.id}">${item.name}</option>`;
+    });
+
+    category.innerHTML = row;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
 });
 
-function openEditModal(e) {
-  let index = e.target.getAttribute("data-index");
-  let user = users[index];
+closeAddModal.addEventListener("click", () => {
+  addModal.classList.add("hidden");
+});
 
-  editModal.classList.remove("hidden");
-
-  document.querySelector("#edit-img").value = user.image;
-  document.querySelector("#edit-name").value = user.name;
-  document.querySelector("#edit-description").value = user.description;
-  document.querySelector("#edit-price").value = user.price;
-
-  document.querySelector("#saveEditBtn").addEventListener(
-    "click",
-    function () {
-      saveEdit(index);
-    },
-    { once: true }
-  );
-}
-
-function saveEdit(index) {
-  let updatedImage = document.querySelector("#edit-img").value;
-  let updatedName = document.querySelector("#edit-name").value;
-  let updatedDescription = document.querySelector("#edit-description").value;
-  let updatedPrice = document.querySelector("#edit-price").value;
-
-  users[index] = {
-    image: updatedImage,
-    name: updatedName,
-    description: updatedDescription,
-    price: updatedPrice,
+const addProduct = async () => {
+  const productData = {
+    name: ism.value,
+    description: description.value,
+    categoryId: category.value,
+    price: price.value,
+    file: [0],
   };
 
-  editModal.classList.add("hidden");
-  getFetch();
-}
+  const data = await fetch("http://64.226.108.80:8090/product/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token"),
+    },
+    body: JSON.stringify(productData),
+  });
 
-closeEdit.addEventListener("click", () => {
-  editModal.classList.add("hidden");
-});
+  const res = data.json();
+
+  getProducts();
+  addModal.classList.add("hidden");
+  console.log(res);
+
+};
+
+save.addEventListener("click", () => addProduct());

@@ -28,7 +28,7 @@ function register() {
   if (firstname.value !== "") {
     console.log("ishladi");
     
-    fetch("http://161.35.214.247:8090/auth/register", init)
+    fetch("http://64.226.108.80:8090/auth/register", init)
       .then((response) => {
         console.log(response);
         return response.json();
